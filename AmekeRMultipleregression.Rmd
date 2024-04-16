@@ -1,0 +1,158 @@
+---
+title: "Ameke"
+author: "DavidSon"
+date: "2024-01-28"
+output: html_document
+---
+
+```{r plot_code, echo=FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(readr)
+library(openxlsx)
+library(ggplot2)
+library(rmarkdown)
+library(rlang)
+```
+
+
+#PART A
+
+#Import data----General Noxemission
+
+```{r}
+AM<- read_xlsx("Result/Mastercombinereasultlist.xlsx", sheet = "SheetC")
+```
+
+```{r}
+AM2<- select(AM, Nox2018, Nox2019, Nox2020,Windspeed_Averageweekly2018, Temperature_Averageweekly2018, Windspeed_Averageweekly2019, Temperature_Averageweekly2019,Windspeed_Averageweekly2020, Temperature_Averageweekly2020, Noxemission_2018, Noxemission_2019, Noxemission_2020, Averageweekly_tempgrad_2018, Averageweekly_tempgrad_2019, Averageweekly_tempgrad_2020)
+```
+
+
+```{r}
+df_long <- AM2 %>%
+  pivot_longer(cols = everything(),
+               names_to = c(".value", "Year"),
+               names_pattern = "(\\D+)(\\d+)")
+```
+
+```{r}
+# List of dependent variable names
+independent_vars <- c("Windspeed_Averageweekly", "Temperature_Averageweekly", "Noxemission_")
+```
+
+
+#MultipleregressionZone
+
+```{r}
+# Convert "Year" to a factor with specified levels
+df_long$Year <- factor(df_long$Year, levels = c("2018", "2019", "2020"))
+```
+
+
+
+
+```{r}
+# Fit multiple linear regression model
+model <- lm(Nox ~ Windspeed_Averageweekly + Temperature_Averageweekly + Noxemission_ + Averageweekly_tempgrad_, data = df_long)
+
+# View summary of the model
+summary(model)
+
+```
+
+
+
+
+#Import data----Simple Noxemission
+
+```{r}
+AM2B<- read_xlsx("Result/Mastercombinereasultlist.xlsx", sheet = "SheetB")
+```
+
+```{r}
+AM2B<- select(AM2B, Nox2018, Nox2019, Nox2020,Windspeed_Averageweekly2018, Temperature_Averageweekly2018, Windspeed_Averageweekly2019, Temperature_Averageweekly2019,Windspeed_Averageweekly2020, Temperature_Averageweekly2020, Noxemission_2018, Noxemission_2019, Noxemission_2020, Averageweekly_tempgrad_2018, Averageweekly_tempgrad_2019, Averageweekly_tempgrad_2020)
+```
+
+
+```{r}
+df_longB <- AM2B %>%
+  pivot_longer(cols = everything(),
+               names_to = c(".value", "Year"),
+               names_pattern = "(\\D+)(\\d+)")
+```
+
+```{r}
+# List of dependent variable names
+independent_vars <- c("Windspeed_Averageweekly", "Temperature_Averageweekly", "Noxemission_")
+```
+
+
+#MultipleregressionZone
+
+```{r}
+# Convert "Year" to a factor with specified levels
+df_longB$Year <- factor(df_longB$Year, levels = c("2018", "2019", "2020"))
+```
+
+
+
+
+```{r}
+# Fit multiple linear regression model
+modelB <- lm(Nox ~ Windspeed_Averageweekly + Temperature_Averageweekly + Noxemission_ + Averageweekly_tempgrad_, data = df_longB)
+
+# View summary of the model
+summary(modelB)
+
+```
+
+
+#PART B
+
+
+
+
+#Import data----Simple Noxemission
+
+```{r}
+AM3B<- read_xlsx("Result/threelocationnox.xlsx", sheet = "Sheetcopy")
+```
+
+```{r}
+AM3B<- select(AM3B, Year, Averageweekly_VilsandiNOx,Averageweekly_LahemaaNOx,   Averageweekly_SaarejärveNOx, Noxemission_, Noxemissionoverall_)
+```
+
+
+```{r}
+# List of dependent variable names
+independent_vars <- c("Windspeed_Averageweekly", "Temperature_Averageweekly", "Noxemission_")
+```
+
+
+#MultipleregressionZone
+
+```{r}
+# Convert "Year" to a factor with specified levels
+AM3B$Year <- factor(AM3B$Year, levels = c("2018", "2019", "2020"))
+```
+
+
+
+
+```{r}
+# Fit multiple linear regression model
+model3B <- lm(Nox ~ Averageweekly_VilsandiNOx,Averageweekly_LahemaaNOx,Averageweekly_SaarejärveNOx, data = AM3B)
+
+# View summary of the model
+summary(model3B)
+
+```
+
+
+
+
+
+

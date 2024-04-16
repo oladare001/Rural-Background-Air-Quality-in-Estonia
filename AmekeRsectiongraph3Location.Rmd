@@ -1,0 +1,457 @@
+---
+title: "Ameke"
+author: "DavidSon"
+date: "2024-01-28"
+output: html_document
+---
+
+```{r plot_code, echo=FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(readr)
+library(openxlsx)
+library(ggplot2)
+library(rmarkdown)
+library(rlang)
+library(patchwork)
+```
+
+
+#Import data
+
+```{r}
+AM<- read_xlsx("Result/threelocationnox.xlsx", sheet = "Sheetcopy")
+
+
+#AM <- read.csv("Result/Mastersmallerversion.csv", sep = "'", header = TRUE)
+
+#AMNOXEMISSION<- read_xlsx("Result/threelocationnox.xlsx", sheet = "Sheet2")
+```
+
+```{r}
+df_long<- select(AM, Week, Year, Averageweekly_VilsandiNOx,   "Averageweekly_LahemaaNOx",    Averageweekly_SaarejärveNOx, Noxemissionoverall_)
+```
+
+
+
+
+
+
+
+# Step 1: Calculate residuals for each year and store them in a data frame
+residuals_df3 <- data.frame(Year = integer(), Residual = numeric())
+
+
+#plotGraph1
+```{r}
+residuals_df <- data.frame(Week = integer(), Year = integer(), Noxemissionoverall_ = numeric(), Residual = numeric())
+
+# Loop through unique years
+for (year in unique(df_long$Year)) {
+  # Subset the data for the current year
+  sub_df <- subset(df_long, Year == year)
+  
+  # Fit linear regression model
+  model <- lm(Averageweekly_VilsandiNOx ~ Noxemissionoverall_, data = sub_df)
+  
+  # Calculate residuals
+  sub_df$residual <- residuals(model)
+  
+  # Add Week, Year, and Noxemissionoverall_ columns to sub_df
+  sub_df$Week <- sub_df$Week  # Add Week column
+  sub_df$Year <- year
+  sub_df$Noxemissionoverall_ <- sub_df$Noxemissionoverall_  # Make sure the column name matches
+  
+  # Append residuals to the residuals_df data frame
+  residuals_df <- rbind(residuals_df, sub_df[, c("Week", "Year", "Noxemissionoverall_", "residual")])
+}
+
+GraphA1<-ggplot(residuals_df, aes(x = Week, xend = Week, y = 0, yend = residual, color = factor(Year))) +
+  geom_segment(alpha = 0.5, size = 0.5) +
+  labs(x = "Weeks", y = "Residuals", color = "Years")+# Use geom_segment instead of geom_point
+  geom_point()  # Add geom_point if needed
+```
+
+
+
+
+
+
+
+
+
+#plotGraph1
+```{r}
+# Step 2: Plot graph with trendlines and residuals
+GraphA<-ggplot(df_long, aes(x = Noxemissionoverall_ , y = Averageweekly_VilsandiNOx, color = factor(Year))) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dotted") +
+  geom_point() +
+  facet_wrap(~ 'WeeklyAverage_Trendlines of VilsandiNOx & NoxEmission (2018_2020)', scales = "free_y") +
+  labs(x = "Noxemission", y = "WeeklyAverage_VilsandiNOx", color = "Year") +
+  theme_minimal() +
+  #theme_classic()+
+  geom_text(data = equations_df, aes(label =paste(part2018, part2019,part2020),
+                                     x = Inf, y = -Inf, hjust = 1, vjust = 0), size = 2.5)
+
+
+# Arrange GraphA and GraphA1 vertically
+combined_plot <- GraphA / GraphA1
+
+```
+
+
+
+
+
+
+
+#plotGraph2
+```{r}
+# Step 1: Calculate residuals for each year and store them in a data frame
+residuals_df2 <- data.frame(Year = integer(), Residual = numeric())
+
+# Loop through unique years
+for (year in unique(df_long$Year)) {
+  # Subset the data for the current year
+  sub_df <- subset(df_long, Year == year)
+  
+  # Fit linear regression model
+  model2 <- lm(Averageweekly_LahemaaNOx ~ Noxemissionoverall_, data = sub_df)
+  
+  # Calculate residuals
+  sub_df$residual <- residuals(model2)
+  
+  # Add Week, Year, and Noxemissionoverall_ columns to sub_df
+  sub_df$Week <- sub_df$Week  # Add Week column
+  sub_df$Year <- year
+  sub_df$Noxemissionoverall_ <- sub_df$Noxemissionoverall_  # Make sure the column name matches
+  
+  # Append residuals to the residuals_df data frame
+  residuals_df2 <- rbind(residuals_df2, sub_df[, c("Week", "Year", "Noxemissionoverall_", "residual")])
+}
+
+
+GraphB1<-ggplot(residuals_df2, aes(x = Week, xend = Week, y = 0, yend = residual, color = factor(Year))) +
+  geom_segment(alpha = 0.5, size = 0.5) +
+  labs(x = "Weeks", y = "Residuals", color = "Years")+# Use geom_segment instead of geom_point
+  geom_point()  # Add geom_point if needed
+
+
+```
+
+
+
+#plotGraph2
+```{r}
+# Step 2: Plot graph with trendlines and residuals
+GraphB<-ggplot(df_long, aes(x = Noxemissionoverall_ , y = Averageweekly_LahemaaNOx, color = factor(Year))) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dotted") +
+  geom_point() +
+  facet_wrap(~ 'WeeklyAverage_Trendlines of LahemaaNOx & NoxEmission (2018_2020)', scales = "free_y") +
+  labs(x = "Noxemission", y = "Averageweekly_LahemaaNOx", color = "Year") +
+  theme_minimal() +
+  geom_text(data = equations_df2, aes(label =paste(part2018, part2019,part2020),
+                                     x = Inf, y = -Inf, hjust = 1, vjust = 0), size = 2.5)
+
+
+# Arrange GraphB and GraphB1 vertically
+combined_plot2 <- GraphB / GraphB1
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#plotGraph3
+```{r}
+# Step 1: Calculate residuals for each year and store them in a data frame
+residuals_df3 <- data.frame(Year = integer(), Residual = numeric())
+
+# Loop through unique years
+for (year in unique(df_long$Year)) {
+  # Subset the data for the current year
+  sub_df <- subset(df_long, Year == year)
+  
+  # Fit linear regression model
+  model3 <- lm(Averageweekly_SaarejärveNOx ~ Noxemissionoverall_, data = sub_df)
+  
+  # Calculate residuals
+  sub_df$residual <- residuals(model3)
+  
+  # Add Week, Year, and Noxemissionoverall_ columns to sub_df
+  sub_df$Week <- sub_df$Week
+  sub_df$Year <- year
+  sub_df$Noxemissionoverall_ <- sub_df$Noxemissionoverall_  # Make sure the column name matches
+  
+  # Append residuals to the residuals_df data frame
+  residuals_df3 <- rbind(residuals_df3, sub_df[, c("Week", "Year", "Noxemissionoverall_", "residual")])
+}
+
+GraphC1<-ggplot(residuals_df3, aes(x = Week, xend = Week, y = 0, yend = residual, color = factor(Year))) +
+  geom_segment(alpha = 0.5, size = 0.5) +
+  labs(x = "Weeks", y = "Residuals", color = "Years")+# Use geom_segment instead of geom_point
+  geom_point()  # Add geom_point if needed
+
+```
+
+#plotGraph3
+```{r}
+# Step 2: Plot graph with trendlines and residuals
+GraphC<-ggplot(df_long, aes(x = Noxemissionoverall_ , y = Averageweekly_SaarejärveNOx, color = factor(Year))) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dotted") +
+  geom_point() +
+  facet_wrap(~ 'WeeklyAverage_Trendlines of SaarejärveNOx & NoxEmission (2018_2020)', scales = "free_y") +
+  labs(x = "Noxemission", y = "WeeklyAverage_SaarejärveNOx", color = "Years") +
+  theme_minimal() +
+  geom_text(data = equations_df3, aes(label =paste(part2018, part2019,part2020),
+                                     x = Inf, y = -Inf, hjust = 1, vjust = 0), size = 2.5)
+
+# Arrange GraphB and GraphB1 vertically
+combined_plot3 <- GraphC / GraphC1
+```
+
+
+
+
+
+
+
+#THE FOURTHLOCATION THAT WASN'T COVERED WILL BE GRAPH 4
+
+#plotGraph4
+```{r}
+# Step 1: Calculate residuals for each year and store them in a data frame
+residuals_df4 <- data.frame(Year = integer(), Residual = numeric())
+
+# Loop through unique years
+for (year in unique(df_long$Year)) {
+  # Subset the data for the current year
+  sub_df <- subset(df_long, Year == year)
+  
+  # Fit linear regression model
+  model4 <- lm(Temperature_Averageweekly ~ Nox, data = sub_df)
+  
+  # Calculate residuals
+  sub_df$residual <- residuals(model4)
+  
+  # Add Week, Year, and Noxemissionoverall_ columns to sub_df
+  sub_df$Week <- sub_df$Week
+  sub_df$Year <- year
+  sub_df$Nox <- sub_df$Nox # Make sure the column name matches
+  
+  # Append residuals to the residuals_df data frame
+  residuals_df4 <- rbind(residuals_df4, sub_df[, c("Week","Year", "Nox", "residual")])
+}
+
+GraphD1<-ggplot(residuals_df4, aes(x = Week, xend = Week, y = 0, yend = residual, color = factor(Year))) +
+  geom_segment(alpha = 0.5, size = 0.5) +
+  labs(x = "Weeks", y = "Residuals", color = "Years")+# Use geom_segment instead of geom_point
+  geom_point()  # Add geom_point if needed
+
+
+```
+
+#plotGraph4
+```{r}
+# Step 2: Plot graph with trendlines and residuals
+GraphD<-ggplot(df_long, aes(x = Nox  , y = Temperature_Averageweekly, color = Year)) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dotted") +
+  geom_point() +
+  facet_wrap(~ 'AverageWeekly_Trendlines of Nox & Temperature_Averageweekly (2018_2020)', scales = "free_y") +
+  labs(x = "Nox", y = "Temperature_Averageweekly", color = "Years") +
+  theme_minimal() +
+  geom_text(data = equations_df4, aes(label =paste(part2018, part2019,part2020),
+                                     x = Inf, y = -Inf, hjust = 1, vjust = 0), size = 2.5)
+
+# Arrange GraphD and GraphD1 vertically
+combined_plot4 <- GraphD / GraphD1
+```
+
+
+
+
+
+
+
+
+#Equation of line region
+#Grph1text
+```{r}
+# Calculate and annotate equation of the line and R-squared value for each year
+equations <- lapply(unique(df_long$Year), function(year) {
+  sub_df <- subset(df_long, Year == year)
+  model <- lm(Averageweekly_VilsandiNOx ~ Noxemissionoverall_, data = sub_df)
+  sub_df$residuals <- residuals(model)
+  eq <- paste("Year", year, ": y =", round(coef(model)[2], 2), "x+", round(coef(model)[1], 2), "R^2 =", round(summary(model)$r.squared, 2))
+  return(eq)
+})
+# Create a dataframe with Year and Equation columns
+equations_df <- data.frame(Year = unique(df_long$Year), equations)
+#colnames(equations_df)
+```
+
+```{r}
+colnames(equations_df)<-c("Year", "part2018", "part2019", "part2020")
+```
+
+
+
+
+
+
+
+
+
+
+
+#Grph2text
+```{r}
+# Calculate and annotate equation of the line and R-squared value for each year
+equations2 <- lapply(unique(df_long$Year), function(year) {
+  sub_df <- subset(df_long, Year == year)
+  modelEQ1 <- lm(Averageweekly_LahemaaNOx ~ Noxemissionoverall_, data = sub_df)
+  eq <- paste("Year", year, ": y =", round(coef(modelEQ1)[2], 2), "x+", round(coef(modelEQ1)[1], 2), "R^2 =", round(summary(modelEQ1)$r.squared, 2))
+  return(eq)
+})
+# Create a dataframe with Year and Equation columns
+equations_df2 <- data.frame(Year = unique(df_long$Year), equations2)
+#colnames(equations_df2)
+
+```
+
+```{r}
+colnames(equations_df2)<-c("Year", "part2018", "part2019", "part2020")
+```
+
+
+
+
+
+
+
+
+
+
+
+#Graph3text
+```{r}
+# Calculate and annotate equation of the line and R-squared value for each year
+equations3 <- lapply(unique(df_long$Year), function(year) {
+  sub_df <- subset(df_long, Year == year)
+  modelQ3 <- lm(Averageweekly_SaarejärveNOx ~ Noxemissionoverall_, data = sub_df)
+  eq <- paste("Year", year, ": y =", round(coef(modelQ3)[2], 2), "x+", round(coef(modelQ3)[1], 2), "R^2 =", round(summary(modelQ3)$r.squared, 2))
+  return(eq)
+})
+# Create a dataframe with Year and Equation columns
+equations_df3 <- data.frame(Year = unique(df_long$Year), equations3)
+#colnames(equations_df3)
+
+```
+
+```{r}
+colnames(equations_df3)<-c("Year", "part2018", "part2019", "part2020")
+```
+
+
+
+
+
+
+
+
+
+
+
+#Graph4text
+```{r}
+# Calculate and annotate equation of the line and R-squared value for each year
+equations4 <- lapply(unique(df_long$Year), function(year) {
+  sub_df <- subset(df_long, Year == year)
+  modelQ4 <- lm(Temperature_Averageweekly ~ Nox, data = sub_df)
+  eq <- paste("Year", year, ": y =", round(coef(modelQ4)[2], 2), "x+", round(coef(modelQ4)[1], 2), "R^2 =", round(summary(modelQ4)$r.squared, 2))
+  return(eq)
+})
+# Create a dataframe with Year and Equation columns
+equations_df4 <- data.frame(Year = unique(df_long$Year), equations4)
+#colnames(equations_df4)
+
+```
+
+
+```{r}
+colnames(equations_df4)<-c("Year", "part2018", "part2019", "part2020")
+```
+
+
+
+
+
+
+
+
+
+#Export Graphs
+
+```{r}
+ #List of plot objects
+plot_list <- list(VilsandiNOxT = combined_plot, LahemaaNOxT = combined_plot2, SaarejärveNOxT = combined_plot3)
+
+
+# Export the graph in PDF format
+#ggsave("GraphAW.pdf", GraphA, width = 8, height = 6)
+
+# Export all plots to PDF
+invisible(lapply(names(plot_list), function(x) ggsave(paste0(x, ".pdf"), plot = plot_list[[x]])))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#REFRAMING NOXEMISION DATASHEET
+```{r}
+AMNOXEMISSION<- read_xlsx("Result/threelocationnox.xlsx", sheet = "Sheet3")
+
+
+#DATAFRAME<-
+``{r}
+df_l<- AMNOXEMISSION %>%
+  pivot_longer(cols = -Week,
+               names_to = c(".value", "Year"),
+               names_pattern = "^(\\D+)_?(\\d+)$")
+
+
+
+# Install and load the openxlsx package
+#install.packages("openxlsx")
+#library(openxlsx)
+
+# Specify the Excel file path
+excel_file <- "C:/Users/Stephen/Desktop/Davidsonproject/Amikee/Result/special2.xlsx"
+
+# Write the data frame to Excel
+write.xlsx(df_l, excel_file)
+
+```

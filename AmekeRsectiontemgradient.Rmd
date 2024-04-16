@@ -1,0 +1,165 @@
+---
+title: "Ameke"
+author: "DavidSon"
+date: "2024-01-28"
+output: html_document
+---
+
+```{r}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(readr)
+library(openxlsx)
+library(lubridate)
+```
+
+#PARTA
+
+#Import data
+
+```{r}
+#DATA <- read.csv("C:/Users/Stephen/Desktop/Davidsonproject/Amikee/Temp_grad 2018-2020", header = TRUE, sep = ";")
+
+tem_grad<- read_xlsx("Temp_grad 2018-2020.xlsx", sheet = "Sheet1")
+
+```
+
+
+```{r}
+# Seperate the data and time column
+DATA<- separate(tem_grad, "Date", into = c("Date", "time"), sep = " ")
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Convert 'Date' column to Date type
+DATA$Date <- as.Date(DATA$Date)
+```
+
+
+
+
+#Firsttwins
+```{r}
+# Add a Week column starting from January 1st of each year
+dftest <- DATA %>% mutate(
+  Year = lubridate::year(Date),
+  StartOfYear = as.Date(paste(Year, "-01-01", sep = ""), format = "%Y-%m-%d"),
+  Week = ceiling(as.numeric(Date - StartOfYear + 1) / 7)
+)%>% 
+select(-StartOfYear)
+```
+
+
+
+
+
+```{r}
+# Calculate weekly Sums
+weekly_temp_30 <- dftest %>%
+  group_by(Year, Week) %>%
+  summarize( Weeklysum_Temp_gradient = sum(temp30,  na.rm = TRUE) )
+```
+
+
+
+
+```{r}
+# Merge the weekly payments back to the original dataframe
+result_df22 <- merge(dftest, weekly_temp_30, by = c("Year", "Week"), all.x = TRUE)
+```
+
+ 
+
+
+# Count all values (including NA) in the 'Ķengarags' column by Weekly ID
+
+```{r}
+count_by_id <- result_df22 %>%
+  group_by(Week, Year) %>%
+  summarise(WeeklyCount_Values = n())
+```
+
+
+
+
+#Count all values (excluding NA) in the each NOXlocation Weekly/Yearly
+
+```{r}
+# Calculate weekly total data value
+weekly_is_NotNA_temp30 <- result_df22 %>%
+  group_by( Week, Year) %>%
+  summarize(temp30NotNa = sum(!is.na(temp30)))
+
+```
+
+
+
+
+#SPECIALZONE(WeeklyformatArena:  SECONDSHEETDATA)
+```{r}
+# Merge the weekly payments back to the original dataframe
+Secondsheet <- merge(merge(weekly_temp_30, count_by_id, by = c("Week", "Year"), all = TRUE), weekly_is_NotNA_temp30, by = c("Week", "Year"), all.x = TRUE)
+```
+
+```{r}
+  #mutate(Percentage_Data_coverage = (Totals_Value_NotNAperweek/Total_Value_perweek) * 100)
+```
+#TESTB <- Secondsheet %>% 
+
+
+
+```{r}
+	
+VilsandiNOxNotNa
+LahemaaNOxNotNa
+SaarejärveNOxNotNa
+
+
+```
+
+```{r}
+TESTBB <- Secondsheet %>%
+  #group_by(Week, Year)
+  mutate(
+    Averageweekly_temp30 = Weeklysum_Temp_gradient /temp30NotNa
+  )
+
+```
+
+
+
+
+
+
+
+#EXPORTINGSHEETZONE
+
+
+```{r}
+# Install and load the openxlsx package
+#install.packages("openxlsx")
+#library(openxlsx)
+
+# Specify the Excel file path
+excel_file <- "C:/Users/Stephen/Desktop/Davidsonproject/Amikee/Result/threelocationnox.xlsx"
+
+# Write the data frame to Excel
+write.xlsx(TESTBB, excel_file)
+
+```
+
+
+
+
+
